@@ -230,7 +230,7 @@ if __name__ == "__main__":
     # 基础训练参数
     parser.add_argument("--out_dir", type=str, default="base_model_215M", help="模型输出目录")
     parser.add_argument("--epochs", type=int, default=1, help="训练轮数")
-    parser.add_argument("--batch_size", type=int, default=4, help="批次大小")
+    parser.add_argument("--batch_size", type=int, default=32, help="批次大小")
     parser.add_argument("--learning_rate", type=float, default=2e-4, help="学习率")
     parser.add_argument(
         "--device", type=str, default="cuda:0" if torch.cuda.is_available() else "cpu", help="训练设备"
@@ -238,8 +238,10 @@ if __name__ == "__main__":
     parser.add_argument("--dtype", type=str, default="bfloat16", help="数据类型")
 
     # 实验跟踪和数据加载参数
-    parser.add_argument("--use_swanlab", action="store_true",default=True, help="是否使用SwanLab进行实验跟踪")
-    parser.add_argument("--num_workers", type=int, default=8, help="数据加载的工作进程数")
+    parser.add_argument(
+        "--use_swanlab", action="store_true", default=True, help="是否使用SwanLab进行实验跟踪"
+    )
+    parser.add_argument("--num_workers", type=int, default=30, help="数据加载的工作进程数")
     parser.add_argument(
         "--data_path",
         type=str,
@@ -272,11 +274,11 @@ if __name__ == "__main__":
             args.device = "cuda:0"
         else:
             args.device = "cpu"
-    print(f"device {args.device}")
+    print(f">>>> device {args.device}")
 
     # ==================== 实验跟踪初始化 ====================
     if args.use_swanlab:
-        print("使用swanlab记录")
+        print(">>>> 使用swanlab记录")
         # 注意：使用前需要先登录 swanlab.login(api_key="")
         run = swanlab.init(
             project="Happy-LLM",  # 项目名称
@@ -286,6 +288,7 @@ if __name__ == "__main__":
 
     # ==================== 模型配置 ====================
     # 定义语言模型的配置参数
+    print(">>>> 模型配置")
     lm_config = ModelConfig(
         dim=1024,  # 模型维度
         n_layers=18,  # Transformer层数
@@ -306,7 +309,7 @@ if __name__ == "__main__":
 
     # 设置混合精度训练的上下文管理器
     # CPU训练时使用nullcontext，GPU训练时使用autocast
-    ctx = nullcontext() if device_type == "cpu" else torch.cuda.amp.autocast()
+    ctx = nullcontext() if device_type == "cpu" else torch.amp.autocast()
 
     # ==================== 模型和数据初始化 ====================
     # 初始化模型和分词器
@@ -328,7 +331,7 @@ if __name__ == "__main__":
     # ==================== 优化器和训练组件初始化 ====================
     # 初始化混合精度训练的梯度缩放器
     # 只有在使用float16或bfloat16时才启用
-    scaler = torch.cuda.amp.GradScaler(enabled=(args.dtype in ["float16", "bfloat16"]))
+    scaler = torch.amp.GradScaler(enabled=(args.dtype in ["float16", "bfloat16"]))
 
     # 初始化Adam优化器
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
