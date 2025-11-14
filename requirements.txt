@@ -1,2 +1,9 @@
 transformers
-torch
+# torch
+accelerate
+datasets
+jupyter
+ipywidgets
+deepspeed
+peft
+tensorboard
